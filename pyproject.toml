@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "Local emulator for Google Cloud Tasks"
 authors = ["Pontus Bergkvist <pontus.bergkvist@gmail.com>"]
 readme = "README.md"
-packages = [{include = "cloud_tasks_emulator"}]
+packages = [{include = "cloud_tasks_emulator", from ="src"}]
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
