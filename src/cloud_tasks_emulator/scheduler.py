@@ -1,4 +1,4 @@
-from .redis import rc
+from .redis_client import rc
 from time import time, sleep
 from datetime import datetime
 import threading

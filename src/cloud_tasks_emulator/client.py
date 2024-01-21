@@ -12,7 +12,7 @@ from google.cloud.tasks_v2.types import task as gct_task
 from time import time
 from .config import QUEUE_NAME, SCHEDULER_NAME
 
-from .redis import rc
+from .redis_client import rc
 
 
 class CloudTasksClient:
