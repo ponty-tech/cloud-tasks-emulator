@@ -11,7 +11,7 @@ from google.cloud.tasks_v2.types import cloudtasks
 from google.cloud.tasks_v2.types import task as gct_task
 from time import time
 from .config import QUEUE_NAME, SCHEDULER_NAME
-
+from google.protobuf.timestamp_pb2 import Timestamp
 from .redis_client import rc
 
 
@@ -94,6 +94,18 @@ class CloudTasksClient:
         else:
             project_id = "prs-stage" if os.getenv("FLASK_ENV", "production") == "development" else "prs-next"
 
+        schedule_time = task.get("schedule_time", None)
+        if type(schedule_time) == Timestamp:
+            schedule_time = schedule_time.ToSeconds()
+        elif type(schedule_time) == float:
+            schedule_time = int(schedule_time)
+        elif type(schedule_time) == int:
+            pass
+        elif schedule_time is None:
+            schedule_time = int(time())
+        else:
+            raise ValueError("Invalid schedule_time. Key must be a Timestamp, float, int or None.")
+
         cte_task = dict(
             task_id=task_id,
             method=method,
@@ -101,14 +113,15 @@ class CloudTasksClient:
             body=body,
             retries=0,
             headers=headers,
-            schedule_time=task.get("schedule_time", int(time())),
+            schedule_time=schedule_time,
             name=CloudTasksClient.queue_path(project_id, "europe-west1", "cte-emulator") + "/tasks/" + task_id,
         )
+
         if body:
             cte_task["body"] = body.decode()
 
         rc.hset(QUEUE_NAME, task_id, json.dumps(cte_task))
-        rc.zadd(SCHEDULER_NAME, {task_id: cte_task.get("schedule_time")})
+        rc.zadd(SCHEDULER_NAME, {task_id: schedule_time})
         return cte_task
 
     @staticmethod
