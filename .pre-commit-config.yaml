@@ -1,13 +1,17 @@
 repos:
--   repo: https://github.com/psf/black
+  - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
-    - id: black
-      args: [--line-length=120]
-      language_version: python3.10
-- repo: https://github.com/charliermarsh/ruff-pre-commit
-  # Ruff version.
-  rev: 'v0.1.14'
-  hooks:
-    - id: ruff
-      args: [--line-length=120, --fix]
+      - id: black
+        args: [--line-length=120]
+        language_version: python3.10
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: "v0.1.14"
+    hooks:
+      - id: ruff
+        args: [--line-length=120, --fix]
+  - repo: https://github.com/python-poetry/poetry
+    rev: "1.7.0" # add version here
+    hooks:
+      - id: poetry-check

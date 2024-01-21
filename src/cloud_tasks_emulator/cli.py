@@ -1,6 +1,6 @@
 import logging
 import sys
-from cloud_tasks_emulator import Scheduler
+from .scheduler import Scheduler
 
 def main():
     logging.basicConfig(format="[%(asctime)s] %(message)s", datefmt="%H:%M:%S", level=logging.INFO)
@@ -18,3 +18,4 @@ def main():
         sched.drain()
         log.info("Closed CTE")
         sys.exit(0)
+

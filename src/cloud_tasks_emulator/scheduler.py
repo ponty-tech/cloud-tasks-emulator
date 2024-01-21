@@ -55,8 +55,9 @@ class Scheduler(threading.Thread):
                             logging.error(f'Request for task {task["task_id"]} permanently failed')
                             remove_from_queue = True
                         else:
-                            logging.info(
-                                f'Request for task {task["task_id"]} Failed. Retry {retries} of 3. Retrying in {retries ** 3} seconds.'
+                            logging.error(f'Request for task {task["task_id"]} failed. {e.message}')
+                            logging.warning(
+                                f'Retry {retries} of 3. Retrying in {retries ** 3} seconds.'
                             )
                             task["retries"] = retries
                             rc.hset(QUEUE_NAME, item[0], json.dumps(task))

@@ -1,7 +1,7 @@
 import os
 
 
-CTE_BASE_URL = os.getenv("CTE_BASE_URL", "http://backend:6002")
+CTE_BASE_URL = os.getenv("CTE_BASE_URL", "https://utveckling.pontydev.se")
 SCHEDULER_NAME = "cte:scheduler"
 QUEUE_NAME = "cte:queue"
 
