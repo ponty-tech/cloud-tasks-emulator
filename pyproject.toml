@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cloud-tasks-emulator"
-version = "1.0.0"
+version = "1.0.1"
 description = "Local emulator for Google Cloud Tasks"
 authors = ["Pontus Bergkvist <pontus.bergkvist@gmail.com>"]
 readme = "README.md"

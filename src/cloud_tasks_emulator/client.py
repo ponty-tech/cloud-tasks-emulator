@@ -1,7 +1,6 @@
 import json
 import os
 from uuid import uuid4
-from time import time
 from .config import QUEUE_NAME, SCHEDULER_NAME
 from google.protobuf.timestamp_pb2 import Timestamp
 
