@@ -90,7 +90,7 @@ class CloudTasksClient:
             cte_task["body"] = body.decode()
 
         rc.hset(QUEUE_NAME, task_id, json.dumps(cte_task))
-        rc.zadd(SCHEDULER_NAME, {task_id: schedule_time})
+        rc.zadd(SCHEDULER_NAME, schedule_time, task_id)
         return cte_task
 
     @staticmethod
