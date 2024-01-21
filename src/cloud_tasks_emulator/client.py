@@ -3,6 +3,7 @@ import os
 from uuid import uuid4
 from time import time
 from .config import QUEUE_NAME, SCHEDULER_NAME
+from google.protobuf.timestamp_pb2 import Timestamp
 
 from .redis_client import rc
 
@@ -70,7 +71,7 @@ class CloudTasksClient:
             body=body,
             retries=0,
             headers=headers,
-            schedule_time=task.get("schedule_time", int(time())),
+            schedule_time=(task.get("schedule_time", Timestamp().GetCurrentTime())).toSeconds(),
             name=CloudTasksClient.queue_path(project_id, "europe-west1", "cte-emulator") + "/tasks/" + task_id,
         )
         if body:
