@@ -1,14 +1,6 @@
 import json
 import os
 from uuid import uuid4
-from typing import (
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
-from google.cloud.tasks_v2.types import cloudtasks
-from google.cloud.tasks_v2.types import task as gct_task
 from time import time
 from .config import QUEUE_NAME, SCHEDULER_NAME
 
@@ -16,52 +8,29 @@ from .redis_client import rc
 
 
 class CloudTasksClient:
-    def _get_task_from_request(self, request):
-        if "parent" not in request:
-            raise ValueError("request must contain 'parent'.")
-        parent = request["parent"]
-        if "task" not in request:
-            raise ValueError("request must contain 'task'.")
-        task = request["task"]
-        return parent, task
-
-    def delete_task(
-        self,
-        request: Optional[Union[cloudtasks.DeleteTaskRequest, dict]] = None,
-        *,
-        name: Optional[str] = None,
-        retry: Optional[object] = None,
-        timeout: Union[float, object] = None,
-        metadata: Sequence[Tuple[str, str]] = None,
-    ) -> None:
-        _, task = self._get_task_from_request(request)
+    def delete_task(self, name):
+        name = name.split("/")[-1]
 
         try:
-            rc.zrem(SCHEDULER_NAME, task["task_id"])
-            rc.hdel(QUEUE_NAME, task["task_id"])
+            rc.zrem(SCHEDULER_NAME, name)
+            rc.hdel(QUEUE_NAME, name)
         except ConnectionError as e:
-            raise Exception(message=f'Failed to delete task {task["task_id"]}. Error: {e}')
+            raise Exception(message=f'Failed to delete task {name}. Error: {e}')
 
     def create_task(
         self,
-        request: Optional[Union[cloudtasks.CreateTaskRequest, dict]] = None,
-        *,
-        parent: Optional[str] = None,
-        task: Optional[gct_task.Task] = None,
-        retry: Optional[object] = None,
-        timeout: Union[float, object] = None,
-        metadata: Sequence[Tuple[str, str]] = None,
-    ) -> gct_task.Task:
-        if parent is None and task is None and request is None:
-            raise ValueError("Must specify 'parent' or 'task' or 'request'.")
+        parent,
+        task,
+        response_view=None,
+        retry=object,
+        timeout=None,
+        metadata=None
+    ):
+        if parent is None or task is None:
+            raise ValueError("Must specify 'parent' and 'task'")
 
-        if request is not None:
-            parent, task = self._get_task_from_request(request)
-        else:
-            if parent is None:
-                raise ValueError("parent must not be None.")
-            if task is None:
-                raise ValueError("task must not be None.")
+        if response_view is not None:
+            raise NotImplementedError()
 
         if timeout is not None:
             raise NotImplementedError()
