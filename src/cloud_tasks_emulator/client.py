@@ -66,7 +66,7 @@ class CloudTasksClient:
 
         schedule_time = task.get("schedule_time", None)
         if type(schedule_time) == Timestamp:
-            schedule_time = schedule_time.to_seconds()
+            schedule_time = schedule_time.ToSeconds()
         elif type(schedule_time) == float:
             schedule_time = int(schedule_time)
         elif type(schedule_time) == int:
