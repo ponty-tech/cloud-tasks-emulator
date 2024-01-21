@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
-from .emulator import watcher
+from .scheduler import Scheduler
 from .client import CloudTasksClient, NotImplementedError
 
 load_dotenv()
 
-__all__ = [watcher, CloudTasksClient, NotImplementedError]
+__all__ = [Scheduler, CloudTasksClient, NotImplementedError]

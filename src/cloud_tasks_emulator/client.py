@@ -1,26 +1,67 @@
 import json
+import os
 from uuid import uuid4
-from time import sleep
-from datetime import datetime, timedelta
-from .config import QUEUE_NAME_DEFERRED, QUEUE_NAME, PNTY_ENV
-from .decoded_redis import rc
+from typing import (
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
+from google.cloud.tasks_v2.types import cloudtasks
+from google.cloud.tasks_v2.types import task as gct_task
+from time import time
+from .config import QUEUE_NAME, SCHEDULER_NAME
+
+from .redis import rc
 
 
 class CloudTasksClient:
-    def delete_task(self, name):
-        name = name.split("/")[-1]
-        try:
-            items = rc.zrange(QUEUE_NAME_DEFERRED, 0, 0, withscores=True)
-            for item in items:
-                ij = json.loads(item[0])
-                if ij.get("task_id") == name:
-                    rc.zrem(QUEUE_NAME_DEFERRED, item[0])
-        except ConnectionError:
-            sleep(5)
+    def _get_task_from_request(self, request):
+        if "parent" not in request:
+            raise ValueError("request must contain 'parent'.")
+        parent = request["parent"]
+        if "task" not in request:
+            raise ValueError("request must contain 'task'.")
+        task = request["task"]
+        return parent, task
 
-    def create_task(self, parent, task, response_view=None, retry=object, timeout=None, metadata=None):
-        if response_view is not None:
-            raise NotImplementedError()
+    def delete_task(
+        self,
+        request: Optional[Union[cloudtasks.DeleteTaskRequest, dict]] = None,
+        *,
+        name: Optional[str] = None,
+        retry: Optional[object] = None,
+        timeout: Union[float, object] = None,
+        metadata: Sequence[Tuple[str, str]] = None,
+    ) -> None:
+        _, task = self._get_task_from_request(request)
+
+        try:
+            rc.zrem(SCHEDULER_NAME, task["task_id"])
+            rc.hdel(QUEUE_NAME, task["task_id"])
+        except ConnectionError as e:
+            raise Exception(message=f'Failed to delete task {task["task_id"]}. Error: {e}')
+
+    def create_task(
+        self,
+        request: Optional[Union[cloudtasks.CreateTaskRequest, dict]] = None,
+        *,
+        parent: Optional[str] = None,
+        task: Optional[gct_task.Task] = None,
+        retry: Optional[object] = None,
+        timeout: Union[float, object] = None,
+        metadata: Sequence[Tuple[str, str]] = None,
+    ) -> gct_task.Task:
+        if parent is None and task is None and request is None:
+            raise ValueError("Must specify 'parent' or 'task' or 'request'.")
+
+        if request is not None:
+            parent, task = self._get_task_from_request(request)
+        else:
+            if parent is None:
+                raise ValueError("parent must not be None.")
+            if task is None:
+                raise ValueError("task must not be None.")
 
         if timeout is not None:
             raise NotImplementedError()
@@ -28,8 +69,8 @@ class CloudTasksClient:
         if metadata is not None:
             raise NotImplementedError()
 
-        # retry https://googleapis.github.io/google-cloud-python/latest/core/retry.html#google.api_core.retry.Retry  # noqa
-        # task['schedule_time'] = None
+        task_id = str(uuid4())
+
         try:
             if "app_engine_http_request" in task:
                 method = task["app_engine_http_request"]["http_method"]
@@ -45,36 +86,42 @@ class CloudTasksClient:
         except KeyError:
             raise KeyError("Missing required key")
 
-        cte_task = dict(task_id=str(uuid4()), method=method, uri=uri, body=body, retries=0, headers=headers)
+        if os.getenv("PNTY_ENV"):
+            if os.getenv("PNTY_ENV") == "dev":
+                project_id = "scrubbed-one"
+            else:
+                project_id = "prs-stage" if os.getenv("PNTY_ENV") == "stage" else "prs-next"
+        else:
+            project_id = "prs-stage" if os.getenv("FLASK_ENV", "production") == "development" else "prs-next"
+
+        cte_task = dict(
+            task_id=task_id,
+            method=method,
+            uri=uri,
+            body=body,
+            retries=0,
+            headers=headers,
+            schedule_time=task.get("schedule_time", int(time())),
+            name=CloudTasksClient.queue_path(project_id, "europe-west1", "cte-emulator") + "/tasks/" + task_id,
+        )
         if body:
             cte_task["body"] = body.decode()
-        cte_task_encoded = json.dumps(cte_task)
 
-        try:
-            if task.get("schedule_time"):
-                delay_until = task["schedule_time"]
-                # set a faux max queue time for task, in gcloud its 30 days.
-                dt_object = datetime.fromtimestamp(delay_until.ToSeconds())
-                if dt_object > datetime.now() + timedelta(minutes=5):
-                    dt_object = datetime.now() + timedelta(minutes=5)
-                    # delay_until = timestamp_pb2.Timestamp()
-                    # delay_until.FromDatetime(dt_object)
-                execution_ts = (dt_object - datetime(1970, 1, 1)).total_seconds()
-                # execution_ts = delay_until.ToSeconds()
-                rc.zadd(QUEUE_NAME_DEFERRED, {cte_task_encoded: execution_ts})
-            else:
-                # none deferred task
-                rc.rpush(QUEUE_NAME, cte_task_encoded)
-        except ConnectionError:
-            raise RuntimeError("Could not connect to Redis.")
-        project_id = "prs-stage" if PNTY_ENV == "dev" else "prs-next"
-
-        cte_task["name"] = self.queue_path(project_id, "europe-west1", "cte-emulator") + "/tasks/" + cte_task["task_id"]
+        rc.hset(QUEUE_NAME, task_id, json.dumps(cte_task))
+        rc.zadd(SCHEDULER_NAME, {task_id: cte_task.get("schedule_time")})
         return cte_task
 
-    def queue_path(self, project, location, queue):
-        return "projects/{project_id}/locations/{location_id}/queues/{queue_id}".format(
-            project_id=project, location_id=location, queue_id=queue
+    @staticmethod
+    def queue_path(
+        project: str,
+        location: str,
+        queue: str,
+    ) -> str:
+        """Returns a fully-qualified queue string."""
+        return "projects/{project}/locations/{location}/queues/{queue}".format(
+            project=project,
+            location=location,
+            queue=queue,
         )
 
 
@@ -82,3 +129,5 @@ class NotImplementedError(Exception):
     def __init__(self):
         message = "This feature is not implemented."
         super().__init__(message)
+
+
