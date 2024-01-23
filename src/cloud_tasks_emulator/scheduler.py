@@ -65,7 +65,7 @@ class Scheduler(threading.Thread):
 
                 if remove_from_queue:
                     rc.zrem(SCHEDULER_NAME, item[0])
-                    rc.delete(item[0])
+                    rc.hdel(QUEUE_NAME, item[0])
 
     def make_request(self, task_id, method, uri, body, retries, name, schedule_time=None, headers=None):
         if "http" not in uri:
