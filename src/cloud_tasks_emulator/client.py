@@ -102,7 +102,9 @@ class CloudTasksClient:
         elif type(schedule_time) == int:
             pass
         elif schedule_time is None:
-            schedule_time = int(time())
+            t = Timestamp()
+            t.GetCurrentTime()
+            schedule_time = t.ToSeconds()
         else:
             raise ValueError("Invalid schedule_time. Key must be a Timestamp, float, int or None.")
 
@@ -142,5 +144,3 @@ class NotImplementedError(Exception):
     def __init__(self):
         message = "This feature is not implemented."
         super().__init__(message)
-
-
