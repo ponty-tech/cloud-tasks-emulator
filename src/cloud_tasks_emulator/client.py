@@ -16,17 +16,9 @@ class CloudTasksClient:
             rc.zrem(SCHEDULER_NAME, name)
             rc.hdel(QUEUE_NAME, name)
         except ConnectionError as e:
-            raise Exception(message=f'Failed to delete task {name}. Error: {e}')
+            raise Exception(message=f"Failed to delete task {name}. Error: {e}")
 
-    def create_task(
-        self,
-        parent,
-        task,
-        response_view=None,
-        retry=object,
-        timeout=None,
-        metadata=None
-    ):
+    def create_task(self, parent, task, response_view=None, retry=object, timeout=None, metadata=None):
         if parent is None or task is None:
             raise ValueError("Must specify 'parent' and 'task'")
 
@@ -72,7 +64,9 @@ class CloudTasksClient:
         elif type(schedule_time) == int:
             pass
         elif schedule_time is None:
-            schedule_time = int(time())
+            t = Timestamp()
+            t.GetCurrentTime()
+            schedule_time = t.ToSeconds()
         else:
             raise ValueError("Invalid schedule_time. Key must be a Timestamp, float, int or None.")
 
@@ -111,5 +105,3 @@ class NotImplementedError(Exception):
     def __init__(self):
         message = "This feature is not implemented."
         super().__init__(message)
-
-
