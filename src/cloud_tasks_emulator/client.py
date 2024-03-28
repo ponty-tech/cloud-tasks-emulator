@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from uuid import uuid4
 from .config import QUEUE_NAME, SCHEDULER_NAME
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -57,11 +56,11 @@ class CloudTasksClient:
             project_id = "prs-stage" if os.getenv("FLASK_ENV", "production") == "development" else "prs-next"
 
         schedule_time = task.get("schedule_time", None)
-        if type(schedule_time) == Timestamp:
+        if isinstance(schedule_time, Timestamp):
             schedule_time = schedule_time.ToSeconds()
-        elif type(schedule_time) == float:
+        elif isinstance(schedule_time, float):
             schedule_time = int(schedule_time)
-        elif type(schedule_time) == int:
+        elif isinstance(schedule_time, int):
             pass
         elif schedule_time is None:
             t = Timestamp()
