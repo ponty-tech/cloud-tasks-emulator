@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cloud-tasks-emulator"
-version = "1.0.6"
+version = "1.0.7"
 description = "Local emulator for Google Cloud Tasks"
 authors = ["Pontus Bergkvist <pontus.bergkvist@gmail.com>"]
 readme = "README.md"
@@ -10,11 +10,11 @@ packages = [{include = "cloud_tasks_emulator", from ="src"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "^2.28.2"
-redis = "2.10.6"
+redis = ">=2.1.0, < 5.1"
 protobuf = "3.19.5"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.261"
+ruff = "^0.3.5"
 
 [build-system]
 requires = ["poetry-core"]
