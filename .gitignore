@@ -3,3 +3,4 @@ __pycache__
 .DS_STORE
 .env
 dist/
+src/cloud_tasks_emulator.egg-info/
