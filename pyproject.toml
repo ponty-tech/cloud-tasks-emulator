@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cloud-tasks-emulator"
-version = "2.0.4"
+version = "2.0.5"
 description = "Local emulator for Google Cloud Tasks"
 authors = ["Pontus Bergkvist <pontus.bergkvist@gmail.com>"]
 readme = "README.md"
@@ -25,3 +25,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 120
 target-version = 'py311'
+
+[tool.poetry.scripts]
+cte = 'cloud_tasks_emulator.cli:main'
