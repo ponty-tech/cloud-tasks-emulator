@@ -1,9 +1,7 @@
 # cloud-tasks-emulator
 
-To configure poetry for GCP ```poetry config repositories.gcp https://europe-north1-python.pkg.dev/prs-next/ponty```
-
-To build run ```poetry build```\
-To deploy run ```poetry publish -r gcp```
+To build run ```uv build```\
+To build and deploy run ```./publish.sh```
 
 # Release notes
 
@@ -12,3 +10,6 @@ Added support for more redis version and bumped ruff
 
 ## 1.0.8
 Reverted to max 2.* for redis due to ZADD issue
+
+## 1.0.9
+Switched to UV dependencies, build an publish
